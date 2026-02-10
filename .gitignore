@@ -1,0 +1,5 @@
+# Example dll list
+dlls.txt
+# Example executable 
+test.exe
+*.dll
