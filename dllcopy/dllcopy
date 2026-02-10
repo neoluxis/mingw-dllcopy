@@ -1,0 +1,110 @@
+#!/bin/bash
+### author: Neolux Lee
+### date: 2026-02-10
+
+# 函数定义
+print_help() {
+    echo "Usage: $0 [OPTIONS] <exe_path> <dll_list>"
+    echo "Copy DLLs listed in <dll_list> to the directory of <exe_path>."
+    echo ""
+    echo "Options:"
+    echo "  --help, -h        Show this help message"
+    echo "  -v, --version     Show version information"
+    echo "  --verbose         Enable verbose output (show successful copies)"
+    echo ""
+    echo "Environment Variables:"
+    echo "  DLLPATH           Colon-separated list of directories to search for DLLs (optional, defaults to PATH)"
+}
+
+print_version() {
+    echo "dllcopy version 1.0"
+    echo "Author: Neolux Lee"
+    echo "Date: 2026-02-10"
+}
+
+# 处理命令行选项
+verbose=false
+args=()
+for arg in "$@"; do
+    case $arg in
+        --help|-h)
+            print_help
+            exit 0
+            ;;
+        -v|--version)
+            print_version
+            exit 0
+            ;;
+        --verbose)
+            verbose=true
+            ;;
+        *)
+            args+=("$arg")
+            ;;
+    esac
+done
+
+# 如果没有参数，输出help
+if [ ${#args[@]} -eq 0 ]; then
+    print_help
+    exit 0
+fi
+
+# 检查参数数量
+if [ ${#args[@]} -ne 2 ]; then
+    echo "Error: Invalid number of arguments"
+    print_help
+    exit 1
+fi
+
+exe_path="${args[0]}"
+dll_list="${args[1]}"
+
+# 检查环境变量 DLLPATH 或 PATH
+if [ -n "$DLLPATH" ]; then
+    search_paths="$DLLPATH"
+    echo "Using DLLPATH for search: $DLLPATH"
+else
+    search_paths="$PATH"
+    echo "DLLPATH not set, using PATH for search: $PATH"
+fi
+
+# 获取可执行文件所在目录
+exe_dir=$(dirname "$exe_path")
+
+# 检查 DLL 列表文件是否存在
+if [ ! -f "$dll_list" ]; then
+    echo "Error: DLL list file '$dll_list' not found"
+    exit 1
+fi
+
+# 读取 DLL 列表并复制
+while IFS= read -r dll; do
+    if [ "$verbose" = true ]; then
+        echo "Processing DLL: '$dll'"
+    fi
+    # 跳过空行
+    if [ -z "$dll" ]; then
+        continue
+    fi
+
+    found=no
+    # 分割 search_paths
+    IFS=':' read -ra paths <<< "$search_paths"
+    for dir in "${paths[@]}"; do
+        if [ -f "$dir/$dll" ]; then
+            cp "$dir/$dll" "$exe_dir/"
+            if [ "$verbose" = true ]; then
+                echo "Copied $dll from $dir to $exe_dir"
+            fi
+            found=yes
+            break
+        fi
+    done
+
+    if [ "$found" = "no" ]; then
+        echo -e "\033[31mWarning: DLL '$dll' not found in search paths\033[0m"
+    fi
+done < "$dll_list"
+
+echo "DLL copying completed."
