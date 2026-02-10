@@ -7,10 +7,10 @@
 ## 用法
 
 ```bash
-./dllcopy <exe_path> <dll_list_path>
+./dllcopy [OPTIONS] <exe_path> <dll_list>
 
 export DLLPATH=path/to/folder1:path/to/folder2:... # 使用冒号分隔多个搜索路径
-./dllcopy app.exe dll_deps.txt
+./dllcopy --verbose app.exe dll_deps.txt
 ```
 
 其中 `<dll_list_path>` 格式为一行一个dll名字
@@ -22,4 +22,5 @@ libstdc++-6.dll
 libgcc_s_seh-1.dll
 libwinpthread-1.dll
 zlib1.dll
+
 ```
